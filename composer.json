@@ -1,0 +1,10 @@
+{
+    "name" : "solleer/c2-logbook",
+    "autoload": {
+        "classmap": ["src/"]
+    },
+    "require" : {
+        "league/oauth2-client" : "^2.0",
+        "guzzlehttp/guzzle" : "^6.0"
+    }
+}
