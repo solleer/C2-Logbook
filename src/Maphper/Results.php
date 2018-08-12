@@ -7,6 +7,7 @@ use Solleer\C2Logbook\{User};
 class Results implements DataSource {
     private $user;
     private $pk = "id";
+    private $cache = [];
 
     public function __construct(User $user) {
         $this->user = $user;
@@ -21,11 +22,19 @@ class Results implements DataSource {
     }
 
 	public function findByField(array $fields, $options = []) {
-        $results = $this->user->getResults($fields);
-        $newFields = array_diff_key($fields, ['from' => 0, 'to' => 0, 'type' => 0, 'updated_after' => 0]);
-        $arrayDatasource = new ArrayDataSource($results);
-        $results = $arrayDatasource->findByField($newFields);
-        return $this->convertToObjDeep($results);
+        $cacheId = md5(serialize(func_get_args()));
+
+        if (!isset($this->cache[$cacheId])) {
+            $results = $this->convertToObjDeep($this->user->getResults($fields));
+            $newFields = array_diff_key($fields, ['from' => 0, 'to' => 0, 'type' => 0, 'updated_after' => 0]);
+            
+            $arrayDatasource = new ArrayDataSource(new \ArrayObject($results), $this->pk);
+            $results = $arrayDatasource->findByField($newFields, $options);
+
+            $this->cache[$cacheId] = $this->convertToObjDeep($results);
+        }
+
+        return $this->cache[$cacheId];
     }
 
 	public function findAggregate($function, $field, $group = null, array $criteria = [], array $options = []) {
@@ -36,8 +45,8 @@ class Results implements DataSource {
         $this->user->deleteResult($id);
     }
 
-	public function deleteByField(array $fields) {
-        $results = $this->findByField($fields);
+	public function deleteByField(array $fields, array $options) {
+        $results = $this->findByField($fields, $options);
         foreach ($results as $result) {
             $this->deleteById($result->{$this->pk});
         }
