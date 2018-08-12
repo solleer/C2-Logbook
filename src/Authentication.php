@@ -12,9 +12,9 @@ class Authentication {
         return $this->provider;
     }
 
-    public function getToken(array $properties) {
+    public function getToken($requestType, array $properties) {
         try {
-            $accessToken = $this->provider->getAccessToken('authorization_code', $properties));
+            $accessToken = $this->provider->getAccessToken($requestType, $properties);
             return $accessToken;
         }
         catch (\Exception $e) {
@@ -23,13 +23,13 @@ class Authentication {
     }
 
     public function refreshToken($refreshToken) {
-        return $this->getToken([
+        return $this->getToken('refresh_token', [
             'refresh_token' => $refreshToken,
             'grant_type' => 'refresh_token'
         ]);
     }
 
     public function getAccessToken($code) {
-        return $this->getToken(['code' => $code]);
+        return $this->getToken('authorization_code', ['code' => $code]);
     }
 }

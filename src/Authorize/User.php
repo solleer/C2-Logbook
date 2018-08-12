@@ -12,17 +12,19 @@ class User implements \Solleer\User\Authorizable {
         $this->status = $status;
     }
 
-    public function authorize($user, array $args) {
-        if (empty($user)) return false;
+    public function authorize($user, array $args): bool {
+        //if (empty($user)) return false;
 
         $status = $this->status->getOAuthVars();
+        if (empty($status['token_expires'])) return false;
+
         if (time() > $status['token_expires']) {
             if (!$status['refresh_token']) {
                 $this->signin->signout();
                 return false;
             }
 
-            $accessToken = $this->auth->refreshToken($_SESSION['refresh_token']);
+            $accessToken = $this->auth->refreshToken($status['refresh_token']);
 
             if (!$accessToken) {
                 $this->signin->signout();
