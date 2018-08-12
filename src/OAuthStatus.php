@@ -9,7 +9,7 @@ class OAuthStatus {
     }
 
     public function getOAuthVars() {
-        return $_SESSION['oauth'];
+        return $_SESSION['oauth'] ?? [];
     }
 
     public function getToken() {

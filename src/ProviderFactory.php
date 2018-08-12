@@ -21,7 +21,7 @@ class ProviderFactory {
             'urlAuthorize'            => $this->env->getRestRoot() . 'oauth/authorize',
             'urlAccessToken'          => $this->env->getRestRoot() . 'oauth/access_token',
             'urlResourceOwnerDetails' => '',
-            'scopes'                  => 'user:read,results:read'
+            'scope'                  => 'user:read,results:read'
         ]);
     }
 }

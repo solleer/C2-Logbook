@@ -18,6 +18,7 @@ class ClientFactory {
                 'Accept' => 'application/vnd.c2logbook.v1+json',
                 'Authorization' => 'Bearer ' . $this->token,
             ]
-        ])
+        ]);
+        return $client;
     }
 }
