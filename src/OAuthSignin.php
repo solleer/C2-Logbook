@@ -15,19 +15,19 @@ class OAuthSignin {
         $this->oauthStatus = $oauthStatus;
     }
 
-    public function signin($code) {
+    public function signin($code, $setCookie = false) {
         $accessToken = $this->model->getAccessToken($code);
-        if (!$accessToken) return false;
+if (!$accessToken) return false;
         $this->oauthStatus->setOAuthVars([
             'access_token' => $accessToken->getToken(),
             'refresh_token' => $accessToken->getRefreshToken(),
             'token_expires' => $accessToken->getExpires()
-        ]);
+        ], $setCookie);
         $clientFactory = new ClientFactory($this->oauthStatus->getToken(), $this->config);
         $userModel = new User($clientFactory->getClient());
         $user = (object) $userModel->getUser();
-        $this->userStatus->setSigninID($user->id);
-        return true;
+        $this->userStatus->setSigninID($user->id, $setCookie);
+        return false;
     }
 
     public function getProvider() {
@@ -35,7 +35,11 @@ class OAuthSignin {
     }
 
     public function signout() {
-        $this->oauthStatus->setOAuthVars([null]);
+        $this->oauthStatus->setOAuthVars([
+            'access_token' => null,
+            'refresh_token' => null,
+            'token_expires' => null
+        ]);
         $this->userStatus->setSigninID(null);
         return true;
     }

@@ -12,6 +12,6 @@ class OAuthSignin {
     }
 
     public function signin() {
-        if (!empty($this->request->get('code'))) $this->model->signin($this->request->get('code'));
+        if (!empty($this->request->post())) $this->model->signin($this->request->post('code'), $this->request->post('setCookie'));
     }
 }
