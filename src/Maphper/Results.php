@@ -53,8 +53,12 @@ class Results implements DataSource {
     }
 
 	public function save($data) {
-        $response = $this->user->addResult($data);
-        if (!$response) $this->user->updateResult($data->{$this->pk}, $data);
+        try {
+            $response = $this->user->addResult($data);
+        }
+        catch (\Exception $e) {
+            $this->user->updateResult($data->{$this->pk}, $data);
+        }
     }
 
 	public function getErrors() {

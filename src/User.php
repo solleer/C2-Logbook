@@ -14,14 +14,17 @@ class User {
         $this->id = $id;
     }
 
-    public function getUser() {
-        $response = $this->client->request('GET', $this->id);
+    private function clientCall($method, $query = '', $otherData = []) {
+        $response = $this->client->request($method, $query, $otherData);
         return $this->interpretResponse($response);
     }
 
+    public function getUser() {
+        return $this->clientCall('GET', $this->id);
+    }
+
     public function updateUser(\stdClass $data): bool {
-        $response = $this->client->request('PATCH', $this->id, ['json' => $data]);
-        return (bool) $this->interpretResponse($response);
+        return (bool) $this->clientCall('PATCH', $this->id, ['json' => $data]);
     }
 
     /*
@@ -37,17 +40,18 @@ class User {
 
             $response = $this->client->request('GET', $this->id . '/results', [
                 'query' => $filter]);
+
             $data = $this->interpretResponse($response);
 
-            if (!$data) return false;
-
-            foreach ($this->asyncGetOtherPages($this->decodeBody($response->getBody()), $filter) as $pageResult)
-                $data = array_merge($data, $pageResult);
-            foreach ($data as $key => $workout) $data[$key] = $this->addAdditionalResultFields($workout);
-
-            $this->cache[$cacheId] = $data;
+            if (!$data) $this->cache[$cacheId] = [];
+            else {
+                foreach ($this->asyncGetOtherPages($this->decodeBody($response->getBody()), $filter) as $pageResult)
+                    $data = array_merge($data, $pageResult);
+                foreach ($data as $key => $workout) $data[$key] = $this->addAdditionalResultFields($workout);
+                $this->cache[$cacheId] = $data;
+            }
         }
-
+        
         return $this->cache[$cacheId];
     }
 
@@ -68,6 +72,11 @@ class User {
         // Wait for the requests to complete, even if some of them fail
         $results = \GuzzleHttp\Promise\settle($promises)->wait();
 
+        // You can access each result using the key provided to the unwrap
+        // function.
+        //echo $results['image']['value']->getHeader('Content-Length')[0];
+        //echo $results['png']['value']->getHeader('Content-Length')[0];
+
         foreach ($results as $value) {
             yield $this->interpretResponse($value['value']);
         }
@@ -80,10 +89,14 @@ class User {
     }
 
     public function getResult($id) {
-        $response = $this->client->request('GET', $this->id . '/results/' . $id);
-        $data = $this->interpretResponse($response);
-        if ($data) $data = $this->addAdditionalResultFields($data);
-        return $data;
+        if (!isset($this->cache[$id])) {
+            $response = $this->client->request('GET', $this->id . '/results/' . $id);
+            $data = $this->interpretResponse($response);
+            if ($data) $data = $this->addAdditionalResultFields($data);
+            $this->cache[$id] = $data;
+        }
+
+        return $this->cache[$id];
     }
 
     public function updateResult($id, \stdClass $data) {
